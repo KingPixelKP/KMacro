@@ -1,3 +1,4 @@
+
 import json
 import threading
 from pynput import keyboard
@@ -35,14 +36,6 @@ macro_bind = "bind"
 macro_stopBind = "stopBind"
 
 macroPath = ""
-unrecognized_cmd = "Unrecognized command try \"help\" in order to learn more"
-exit = "EXIT"
-help = "HELP"
-run = "RUN"
-helpMenu = """Help --> show this menu
-Exit --> exit the program
-Run (macro text file) --> run a macro"""
-prompt = "?>>"
 
 #Load the configuration file
 def loadConf():
@@ -50,22 +43,6 @@ def loadConf():
         data : dict = json.load(file)
     global macroPath
     macroPath = data[conf_macroPath]
-
-def main():
-    loadConf()
-    cmd : str= ""
-    line : str = []
-
-    while cmd.upper() != exit.upper():
-        line = input(prompt)
-        cmd = line.split()[0].upper()
-        if cmd == help:
-            print(helpMenu)
-        elif cmd == run:
-            prepare_macro(line)
-        else:
-            print(unrecognized_cmd)
-
 
 
 def prepare_macro(line : str):
@@ -132,19 +109,9 @@ def on_activate(data : dict):
     semaphore.acquire()
     print("Macro running")
     for i in steps:
-        action = get_action(i)
-        if action == initMacro:
-            initMacroFun(i)
-        elif action == textMacro:
-            textMacroFun(i)
-        elif action == keyMacro:
-            keyMacroFun(i)
-        elif action == timeMacro:
-            timeMacroFun(i)
-        elif action == finalMacro:
-            finalMacroFun(i)
-        else:
-            print("Unrecognized macro action {} :(", action)
+        resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, timeMacroFun, finalMacroFun,
+                     lambda : print("Unrecognized macro action {} :(", get_action(i)))
+        
     semaphore.release()
 
 #This function stops all macros bound to a certain $stopBind
@@ -163,5 +130,19 @@ def update(key : keyboard.Key, fun, stopFun):
         fun(key)
         stopFun(key)
 
-
-main()
+#This function accepts a MAcro step and resolves it to an action
+#It will pass the argument step as the first parameter
+def resolve_step(step : str, fun1, fun2, fun3, fun4, fun5, error):
+        action = get_action(step)
+        if action == initMacro:
+            fun1(step)
+        elif action == textMacro:
+            fun2(step)
+        elif action == keyMacro:
+            fun3(step)
+        elif action == timeMacro:
+            fun4(step)
+        elif action == finalMacro:
+            fun5(step)
+        else:
+            error(step)
