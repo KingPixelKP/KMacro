@@ -2,6 +2,7 @@
 import json
 import threading
 from pynput import keyboard
+from pynput import mouse
 import time
 
 #Remeber to tun --> source "/home/kpgm/.venv/bin/activate.fish"
@@ -10,12 +11,14 @@ import time
 #[init] --> initialize macro 
 #[t, text]
 #[k, key to press]
+#[mp, mouse button to click, times to click]
 #[ms, time to wait miliseconds]
 #[final] --> finalize macro
 
 initMacro = "init"
 textMacro = "t"
 keyMacro = "k"
+mouseClickMacro = "mc"
 timeMacro = "ms"
 finalMacro = "final"
 
@@ -110,6 +113,12 @@ def keyMacroFun(action):
     key = action[1]
     controller.tap(key)
 
+def mouseClickFun(action):
+    controller = mouse.Controller()
+    button =  mouse.Button[action[1]]
+    times = action[2]
+    controller.click(button, times)
+
 def timeMacroFun(action):
     time.sleep(int(action[1]) / 1000) #convert to msg
 
@@ -128,7 +137,7 @@ def on_activate(data : dict):
         steps : list = data[macro_macro]
         print("Macro running")
         for i in steps:
-            resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, timeMacroFun, finalMacroFun,
+            resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, mouseClickFun, timeMacroFun, finalMacroFun,
                         lambda : print("Unrecognized macro action {} :(", get_action(i)))
             
         semaphore.release() #finish the macro
@@ -151,17 +160,19 @@ def update(key : keyboard.Key, fun, stopFun):
 
 #This function accepts a MAcro step and resolves it to an action
 #It will pass the argument step as the first parameter
-def resolve_step(step : str, fun1, fun2, fun3, fun4, fun5, error):
+def resolve_step(step : str, initFun, textFun, keyFun, clickFun, timeFun, finalFun, error):
         action = get_action(step)
         if action == initMacro:
-            fun1(step)
+            initFun(step)
         elif action == textMacro:
-            fun2(step)
+            textFun(step)
         elif action == keyMacro:
-            fun3(step)
+            keyFun(step)
+        elif action == mouseClickMacro:
+            clickFun(step)
         elif action == timeMacro:
-            fun4(step)
+            timeFun(step)
         elif action == finalMacro:
-            fun5(step)
+            finalFun(step)
         else:
             error(step)

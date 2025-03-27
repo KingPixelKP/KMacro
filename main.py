@@ -10,7 +10,6 @@ Exit --> exit the program
 Run (macro text file) --> run a macro"""
 prompt = "?>>"
 
-
 def main():
     macro.loadConf()
 
