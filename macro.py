@@ -91,8 +91,8 @@ def set_key(bind : str, stopBind : str,  fun, stopFun):
         array = []
 
     l : keyboard.Listener = keyboard.Listener(
-            on_press=lambda event : update(event, hotkey.press, hotkeyStop.press) ,
-            on_release=lambda event : update(event, hotkey.release, hotkeyStop.release))
+            on_press=lambda key, injected : update(key, injected, hotkey.press, hotkeyStop.press) ,
+            on_release=lambda key, injected : update(key, injected, hotkey.release, hotkeyStop.release))
     array.append(l)
     activateListeners[stopBind] = array
     l.start()
@@ -153,10 +153,14 @@ def stop_macro(data : dict):
 
 #This function is called by the listeners to update the state of an hotkey
 #This function needs the semaphore to stop the listeners from "listening" the macro itself (bug?)
-def update(key : keyboard.Key, fun, stopFun):
-    if (semaphore._value != 0):
-        fun(key)
-        stopFun(key)
+def update(key : keyboard.Key, injected : bool, fun, stopFun):
+    if injected:
+        print("Key is injected") #when a macro creates a key press
+    else:
+        print("Key is true") #when a is actually created by an input device (user)
+        if (semaphore._value != 0):
+            fun(key)
+            stopFun(key)
 
 #This function accepts a MAcro step and resolves it to an action
 #It will pass the argument step as the first parameter
