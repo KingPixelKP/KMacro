@@ -10,6 +10,9 @@ finalMessage = "##The MAcro ends here##"
 def main():
     ...
 
+#This function lists the properties of a macro these being 
+#The caller keybind the stopper keybind
+#And the steps the macro takes
 def list_macro_properties(line):
     file = line.split()[1]
     with open(macro.macroPath + file) as file:

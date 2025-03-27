@@ -26,10 +26,12 @@ activateListeners : dict[str:list] = {}
 #Semaphore will interrupt any macros from running ate the same time (TODO)
 #Hopefully this may be removed in order to allow different macros to run in parallel
 semaphore : threading.Semaphore = threading.Semaphore()
+pauseEvent : threading.Event = threading.Event()
 
 
 conf = "./config.json"
 conf_macroPath = "macroPath"
+conf_macroPause = "pauseAllMacroBind"
 
 macro_macro = "macro"
 macro_bind = "bind"
@@ -43,7 +45,23 @@ def loadConf():
         data : dict = json.load(file)
     global macroPath
     macroPath = data[conf_macroPath]
+    pauseEvent.set()
+    setup_pause_hotkey(data[conf_macroPause])
 
+def setup_pause_hotkey(hotkey : str):
+    hotkey : keyboard.HotKey = keyboard.HotKey(keyboard.HotKey.parse(hotkey), toggle_pause_event)
+
+    listener : keyboard.Listener = keyboard.Listener(on_press=hotkey.press,
+                                                     on_release=hotkey.release)
+    listener.start()
+
+def toggle_pause_event():
+    if pauseEvent.is_set():
+        print("Macros paused!")
+        pauseEvent.clear()
+    else:
+        print("Macros enabled!")
+        pauseEvent.set()
 
 def prepare_macro(line : str):
     args : list = line.split()
@@ -105,14 +123,15 @@ def get_action(i : list):
 
 #This function is called by the hotkey that actovates the macro
 def on_activate(data : dict):
-    steps : list = data[macro_macro]
-    semaphore.acquire()
-    print("Macro running")
-    for i in steps:
-        resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, timeMacroFun, finalMacroFun,
-                     lambda : print("Unrecognized macro action {} :(", get_action(i)))
-        
-    semaphore.release()
+    if pauseEvent.is_set(): #Check if macros are paused
+        semaphore.acquire() #Check if other macros are running, this is used to stop the macro calling itself (bug)
+        steps : list = data[macro_macro]
+        print("Macro running")
+        for i in steps:
+            resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, timeMacroFun, finalMacroFun,
+                        lambda : print("Unrecognized macro action {} :(", get_action(i)))
+            
+        semaphore.release() #finish the macro
 
 #This function stops all macros bound to a certain $stopBind
 def stop_macro(data : dict):
