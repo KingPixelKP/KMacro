@@ -5,7 +5,10 @@ Need to install pynput first
 ```
 pip install pynput
 ```
+Now download all .py and the config.json files
 
-Just run with python now (help command exists)
+```
+python3 main.py
+```
 
 
