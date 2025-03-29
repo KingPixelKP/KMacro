@@ -31,8 +31,8 @@ sudo chmod 666 /dev/input/
 
 ## 2
 
-On some systems pynput might recognise the keyboard as some other device in /dev/input/ to solve this at the moment  
-a variable called uinput_device_paths was added to restrict uiput from searching all the events and only listening to  
+On some systems pynput might recognise the keyboard as some other device in /dev/input/ to solve this at the moment
+a variable called uinput_device_paths was added to restrict uiput from searching all the events and only listening to
 those specified by the user 
 
 ## Dependencies
