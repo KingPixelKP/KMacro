@@ -1,3 +1,9 @@
+# What's This?
+
+A macro script i created in python that works in wayland.  
+This is not optimized, and is a the moment untested.
+The language accepted by the macros is in a little comment in macro.py every macro needs to be made in a .json file as the one provided as an example.
+
 # How to use
 
 Need to install pynput first

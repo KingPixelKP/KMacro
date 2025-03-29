@@ -1,0 +1,22 @@
+{
+    "bind":
+    "e",
+    "stopBind":
+    "+",
+    "letRunOnTop":
+    "n",
+    "willRunOnTop":
+    "n",
+    "macro":
+        [
+            ["init"],
+            ["key", "r"],
+            ["sleep", "100"],
+            ["key", "p"],
+            ["sleep" , "100"],
+            ["key", "r"],
+            ["sleep", "100"],
+            ["key", "r"],
+            ["final"]
+        ]
+}
