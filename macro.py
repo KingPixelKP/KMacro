@@ -1,9 +1,19 @@
+import os
+os.environ['PYNPUT_BACKEND_KEYBOARD'] = 'uinput'
+
+uinput_device_paths = "/dev/input/event2"
 
 import json
 import threading
 from pynput import keyboard
-from pynput import mouse
 import time
+import subprocess
+from enum import Enum
+import mouseKey
+
+ydotool = "ydotool"
+
+
 
 #Remeber to tun --> source "/home/kpgm/.venv/bin/activate.fish"
 
@@ -16,10 +26,10 @@ import time
 #[final] --> finalize macro
 
 initMacro = "init"
-textMacro = "t"
-keyMacro = "k"
-mouseClickMacro = "mc"
-timeMacro = "ms"
+textMacro = "type"
+keyMacro = "key"
+mouseClickMacro = "click"
+timeMacro = "sleep"
 finalMacro = "final"
 
 #List of all active listeners the key being the bind to stop the macro
@@ -30,6 +40,8 @@ activateListeners : dict[str:list] = {}
 #Hopefully this may be removed in order to allow different macros to run in parallel
 semaphore : threading.Semaphore = threading.Semaphore()
 pauseEvent : threading.Event = threading.Event()
+macroRunning : threading.Event = threading.Event()
+macroNoLetRun : threading.Event = threading.Event()
 
 
 conf = "./config.json"
@@ -39,8 +51,11 @@ conf_macroPause = "pauseAllMacroBind"
 macro_macro = "macro"
 macro_bind = "bind"
 macro_stopBind = "stopBind"
+macro_run_on_top = "letRunOnTop"
+macro_will_run_on_top = "willRunOnTop"
 
 macroPath = ""
+
 
 #Load the configuration file
 def loadConf():
@@ -49,6 +64,8 @@ def loadConf():
     global macroPath
     macroPath = data[conf_macroPath]
     pauseEvent.set()
+    macroRunning.clear()
+    macroNoLetRun.clear()
     setup_pause_hotkey(data[conf_macroPause])
 
 def setup_pause_hotkey(hotkey : str):
@@ -73,10 +90,10 @@ def prepare_macro(line : str):
     with open(macroPath + file, "r") as file:
         data = json.load(file)
 
-    set_key(data[macro_bind], data[macro_stopBind],lambda : on_activate(data), lambda :stop_macro(data))
+    set_key(data[macro_bind], data[macro_stopBind],data, lambda : on_activate(data), lambda :stop_macro(data))
 
 #Hotkey setter functions
-def set_key(bind : str, stopBind : str,  fun, stopFun):
+def set_key(bind : str, stopBind : str, data : dict, fun, stopFun):
 
     #Instantiate the hotkey that will start a macro
     hotkey = keyboard.HotKey(keyboard.HotKey.parse(bind), fun) 
@@ -91,8 +108,9 @@ def set_key(bind : str, stopBind : str,  fun, stopFun):
         array = []
 
     l : keyboard.Listener = keyboard.Listener(
-            on_press=lambda event : update(event, hotkey.press, hotkeyStop.press) ,
-            on_release=lambda event : update(event, hotkey.release, hotkeyStop.release))
+            on_press=lambda key, injected : update(key, injected, data, hotkey.press, hotkeyStop.press) ,
+            on_release=lambda key, injected : update(key, injected, data, hotkey.release, hotkeyStop.release), 
+            uinput_device_paths = [uinput_device_paths])
     array.append(l)
     activateListeners[stopBind] = array
     l.start()
@@ -105,22 +123,21 @@ def initMacroFun(action):
     print("Macro Startted Running")
 
 def textMacroFun(action):
-    controller = keyboard.Controller()
-    controller.type(action[1])
+    subprocess.run([ydotool, textMacro, action[1]])
 
 def keyMacroFun(action):
-    controller = keyboard.Controller()
-    key = action[1]
-    controller.tap(key)
+    subprocess.run([ydotool, textMacro, action[1]])
 
 def mouseClickFun(action):
-    controller = mouse.Controller()
-    button =  mouse.Button[action[1]]
+    if (isinstance(action[1], str)):
+        mouseButton = mouseKey.get_hex_from_string(action[1])
+    else:
+        mouseButton = int(mouseButton)
     times = action[2]
-    controller.click(button, times)
+    subprocess.run([ydotool, mouseButton, "--repeat", times, mouseButton])
 
 def timeMacroFun(action):
-    time.sleep(int(action[1]) / 1000) #convert to msg
+    time.sleep(int(action[1]) / 1000) #convert to ms
 
 def finalMacroFun(action):
     print("Macro Finished Running")
@@ -132,15 +149,24 @@ def get_action(i : list):
 
 #This function is called by the hotkey that actovates the macro
 def on_activate(data : dict):
-    if pauseEvent.is_set(): #Check if macros are paused
-        semaphore.acquire() #Check if other macros are running, this is used to stop the macro calling itself (bug)
-        steps : list = data[macro_macro]
-        print("Macro running")
-        for i in steps:
-            resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, mouseClickFun, timeMacroFun, finalMacroFun,
-                        lambda : print("Unrecognized macro action {} :(", get_action(i)))
-            
-        semaphore.release() #finish the macro
+    if pauseEvent.is_set() and not (data[macro_will_run_on_top] == "n" and macroRunning.is_set()): #Check if macros are paused or if a macro
+        #cant run while other is running
+        if(macroNoLetRun.is_set()): #Ignore for any macro that does not want other running on top of it
+            print("A macro doesnt want running on top input ignored")
+        else:
+            if(data[macro_run_on_top] == "n"): #If a macro does not want other to run it sets the event
+                macroNoLetRun.set()
+                
+            steps : list = data[macro_macro]
+            print("Macro running")
+            for i in steps:
+                resolve_step(i, initMacroFun, textMacroFun, keyMacroFun, mouseClickFun, timeMacroFun, finalMacroFun,
+                            lambda : print("Unrecognized macro action {} :(", get_action(i)))
+                
+            macroNoLetRun.clear() #Stop ignoring any other macros
+    else:
+        print("Macros are paused or a this macro wont run while other is running")
+
 
 #This function stops all macros bound to a certain $stopBind
 def stop_macro(data : dict):
@@ -153,8 +179,11 @@ def stop_macro(data : dict):
 
 #This function is called by the listeners to update the state of an hotkey
 #This function needs the semaphore to stop the listeners from "listening" the macro itself (bug?)
-def update(key : keyboard.Key, fun, stopFun):
-    if (semaphore._value != 0):
+def update(key : keyboard.Key, injected : bool, data : dict, fun, stopFun):
+    if injected:
+        print("Key is injected") #when a macro creates a key press
+    else:
+        print("Key is true") #when a is actually created by an input device (user)
         fun(key)
         stopFun(key)
 
