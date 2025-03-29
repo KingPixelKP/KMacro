@@ -13,10 +13,6 @@ import mouseKey
 
 ydotool = "ydotool"
 
-
-
-#Remeber to tun --> source "/home/kpgm/.venv/bin/activate.fish"
-
 #Macro formatting 
 #[init] --> initialize macro 
 #[t, text]
@@ -119,7 +115,7 @@ def set_key(bind : str, stopBind : str, data : dict, fun, stopFun):
 
 
 #Functions that handle the Macro types
-def initMacroFun(action):
+def initMacroFun():
     print("Macro Startted Running")
 
 def textMacroFun(action):
@@ -133,13 +129,12 @@ def mouseClickFun(action):
         mouseButton = mouseKey.get_hex_from_string(action[1])
     else:
         mouseButton = int(mouseButton)
-    times = action[2]
-    subprocess.run([ydotool, mouseButton, "--repeat", times, mouseButton])
+    subprocess.run([ydotool, mouseButton, mouseButton])
 
 def timeMacroFun(action):
     time.sleep(int(action[1]) / 1000) #convert to ms
 
-def finalMacroFun(action):
+def finalMacroFun():
     print("Macro Finished Running")
 
 ########################################
@@ -149,7 +144,8 @@ def get_action(i : list):
 
 #This function is called by the hotkey that actovates the macro
 def on_activate(data : dict):
-    if pauseEvent.is_set() and not (data[macro_will_run_on_top] == "n" and macroRunning.is_set()): #Check if macros are paused or if a macro
+    if pauseEvent.is_set() and not (data[macro_will_run_on_top] == "n" and macroRunning.is_set()): 
+        #Check if macros are paused or if a macro
         #cant run while other is running
         if(macroNoLetRun.is_set()): #Ignore for any macro that does not want other running on top of it
             print("A macro doesnt want running on top input ignored")
@@ -192,7 +188,7 @@ def update(key : keyboard.Key, injected : bool, data : dict, fun, stopFun):
 def resolve_step(step : str, initFun, textFun, keyFun, clickFun, timeFun, finalFun, error):
         action = get_action(step)
         if action == initMacro:
-            initFun(step)
+            initFun()
         elif action == textMacro:
             textFun(step)
         elif action == keyMacro:
@@ -202,6 +198,6 @@ def resolve_step(step : str, initFun, textFun, keyFun, clickFun, timeFun, finalF
         elif action == timeMacro:
             timeFun(step)
         elif action == finalMacro:
-            finalFun(step)
+            finalFun()
         else:
             error(step)
