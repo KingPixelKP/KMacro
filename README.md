@@ -5,7 +5,11 @@ Need to install pynput first
 ```
 pip install pynput
 ```
-Now download all .py and the config.json files
+Now git clone the repo
+
+```
+git clone https://github.com/KingPixelKP/KMacro.git
+```
 
 ```
 python3 main.py
