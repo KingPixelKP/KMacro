@@ -11,6 +11,8 @@ Now git clone the repo
 git clone https://github.com/KingPixelKP/KMacro.git
 ```
 
+And finally run the main.py file
+
 ```
 python3 main.py
 ```
