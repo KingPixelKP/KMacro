@@ -10,7 +10,9 @@ script = "SCRIPT"
 active = "ACTIVE"
 helpMenu = """Help --> show this menu
 Exit --> exit the program
-Run (macro text file) --> run a macro"""
+Run (macro text file) --> run a macro
+Script --> run a python macro
+Active --> list active python macros"""
 prompt = "?>>"
 
 
