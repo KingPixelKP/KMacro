@@ -21,6 +21,8 @@ class Script():
     _run : callable
     _bind : str
     _stop_bind : str
+    _pause_others : bool = False
+    _run_on_top : bool = True
     
     name : str
 
@@ -29,6 +31,14 @@ class Script():
         self._bind = getattr(script, "bind")
         self._stop_bind = getattr(script, "stop_bind")
         self.name = name
+        try:
+            self._pause_others = getattr(script, "pause_others")
+        except:
+            print("No pause_others var")
+        try:
+            self._run_on_top = getattr(script, "run_on_top")
+        except:
+            print("No run_on_top var")
 
     def __str__(self):
         return self.name
@@ -42,6 +52,8 @@ class Manager():
     _conf_macro_path : str = "macroPath"
     _conf_macro_pause : str = "pauseAllMacroBind"
     _macros_paused : Event
+    _macro_running : Event
+    _pause_others : Event
 
     active_macros : dict = {}    
     data : dict = {}
@@ -51,7 +63,11 @@ class Manager():
     def __init__(self, conf_path : str):
         self.loadConfigFile(conf_path)
         self._macros_paused = Event()
+        self._macro_running = Event()
+        self._pause_others = Event()
         self._macros_paused.clear()
+        self._macro_running.clear()
+        self._pause_others.clear()
         self.create_pause_listener()
 
     def loadConfigFile(self, conf_path : str):
@@ -109,7 +125,7 @@ class Manager():
 
     def create_listener_hotkey(self, script : Script):
         hotkey = keyboard.HotKey(keyboard.HotKey.parse(script._bind),
-                                  lambda : self.run_macro(script.run)) 
+                                  lambda : self.run_macro(script)) 
         stop_hotkey = keyboard.HotKey(keyboard.HotKey.parse(script._stop_bind),
                                       lambda : self.unload_macro(script._stop_bind, script.name))
         
@@ -129,11 +145,27 @@ class Manager():
         fun1(key)
         fun2(key)
 
-    def run_macro(self, run_function : callable):
+    def run_macro(self, script : Script):
+        if self.is_macro_running and not script._run_on_top:
+           print("Macro running, this macro {} will not run on top".format(script.name))
+           return
+        if self.are_others_paused():
+            print("A Macro is pauseing others")
+        if script._pause_others:
+            self._pause_others.set() 
+        self._macro_running.set()
         if self._macros_paused.is_set():
             print("Macros paused ignoring")
         else:
-            run_function()
+            script.run()
+        self._macro_running.clear()
+        self._pause_others.clear()
+
+    def is_macro_running(self):
+        return self._macro_running.is_set()
+    
+    def are_others_paused(self):
+        return self._pause_others.is_set()
 
     def list_active_macros(self):
         for bind, dict in self.active_macros.items():
