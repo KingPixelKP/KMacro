@@ -24,11 +24,20 @@ def tapKey(key : str, repeat : int = 1):
     for _ in range(repeat):
         macro.keyMacroFun(["",key])
 
+def exec(program, *args):
+    array : list = []
+    array.append(program)
+    for a in args:
+        array.append(a)
+    macro.execMacroFun(array)
+
+
 def mouseClick(mouseButton : str, repeat : int = 1):
     """Function called by the user to simulate a mouse key press
     Param:
     mouseButton --> mouse button to press
     repeat --> ammount of times to repeat this action"""
+    #####Not tested
     for _ in range(repeat):
         macro.mouseClickFun(["",mouseButton])
 

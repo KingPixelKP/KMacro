@@ -1,4 +1,3 @@
-import macro
 import script_manager
 
 unrecognized_cmd = "Unrecognized command try \"help\" in order to learn more"
@@ -9,8 +8,7 @@ script = "SCRIPT"
 active = "ACTIVE"
 helpMenu = """Help --> show this menu
 Exit --> exit the program
-Run (macro text file) --> run a macro
-Script --> run a python macro
+Script/Run --> run a python macro
 Active --> list active python macros"""
 prompt = "?>>"
 
@@ -27,9 +25,9 @@ def main():
         line = input(prompt)
         cmd = line.split()[0].upper()
         if cmd == help:
-            print(macro.helpMenu)
+            print(helpMenu)
         elif cmd == run:
-            macro.prepare_macro(line)
+            manager.load_new_macro(line.split()[1])
         elif cmd == script:
             manager.load_new_macro(line.split()[1])
         elif cmd == active:

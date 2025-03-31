@@ -31,6 +31,10 @@ def textMacroFun(action, delay = 20):
 def keyMacroFun(action):
     subprocess.run([ydotool, textMacro, action[1]])
 
+def execMacroFun(action):
+    subprocess.run(action)
+    pass
+
 def mouseClickFun(action):
     if (isinstance(action[1], str)):
         mouseButton = mouseKey.get_hex_from_string(action[1])
