@@ -8,13 +8,13 @@ def final():
     """This function denotes the end of the macro it also does not do anything"""
     macro.finalMacroFun()
 
-def type(text : str, repeat : int = 1):
+def type(text : str, repeat : int = 1, delay = 20):
     """Function called by the user for typing text
     Param:
     text --> text to output
     repeat --> ammount of times to repeat the action"""
     for _ in range(repeat):
-        macro.textMacroFun(["",text])
+        macro.textMacroFun(["",text], delay)
 
 def tapKey(key : str, repeat : int = 1):
     """Function called by the user for tapping a key (up and down)

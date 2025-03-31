@@ -1,4 +1,3 @@
-import macroEditor
 import macro
 import script_manager
 
@@ -19,12 +18,10 @@ prompt = "?>>"
 conf_path = "./config.json"
 
 def main():
-    macro.loadConf()
-
     manager = script_manager.Manager(conf_path)
 
-    cmd : str= ""
-    line : str = []
+    cmd : str = ""
+    line : str
 
     while cmd.upper() != exit.upper():
         line = input(prompt)
@@ -33,8 +30,6 @@ def main():
             print(macro.helpMenu)
         elif cmd == run:
             macro.prepare_macro(line)
-        elif cmd == "LIST":
-            macroEditor.list_macro_properties(line)
         elif cmd == script:
             manager.load_new_macro(line.split()[1])
         elif cmd == active:

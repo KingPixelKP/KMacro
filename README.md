@@ -2,8 +2,7 @@
 
 A macro script i created in python that works in wayland (No idea about X11).  
 This is not optimized, and is a the moment untested.
-The language of the macros can be either a json file (wich i will not be adding any more func.) or python script
-based macros, an example.py and example.json are provided to aid a little on writing of new macros (as there are no docs yet).
+The language of the macros is python script based macros, an example.py is provided to aid a little on writing of new macros (as there are no docs yet).
 
 # How to use
 

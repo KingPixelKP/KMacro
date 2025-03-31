@@ -1,4 +1,6 @@
 import os
+
+import pynput._util
 os.environ['PYNPUT_BACKEND_KEYBOARD'] = 'uinput'
 
 uinput_device_paths = "/dev/input/event2"
@@ -8,6 +10,8 @@ import importlib
 from threading import Event
 
 from pynput import keyboard
+import pynput
+import sys
 
 
 conf_path = "./config.json"
@@ -87,7 +91,7 @@ class Manager():
     
         listener = self.create_listener_hotkey(s) #Create a new listener for this macro
         names[s.name] = listener
-        self.active_macros[s._bind] = names
+        self.active_macros[s._stop_bind] = names
         listener.start()
 
     def unload_macro(self, bind, macro_name):
@@ -97,18 +101,17 @@ class Manager():
         elif names.get(macro_name) is None:
             print("No macro named: {}".format(macro_name))
         else:
-            names.get(macro_name).stop()
             self.active_macros.get(bind).pop(macro_name)
             if self.active_macros.get(bind).__len__() == 0:
                 self.active_macros.pop(bind)
             print("Macro {} unloaded sucessfully".format(macro_name))
-
+            sys.exit()
 
     def create_listener_hotkey(self, script : Script):
         hotkey = keyboard.HotKey(keyboard.HotKey.parse(script._bind),
                                   lambda : self.run_macro(script.run)) 
         stop_hotkey = keyboard.HotKey(keyboard.HotKey.parse(script._stop_bind),
-                                      lambda : self.unload_macro(script._bind, script.name))
+                                      lambda : self.unload_macro(script._stop_bind, script.name))
         
         listener = keyboard.Listener(on_press=lambda key : self.update_hotkey_states(key, hotkey.press, stop_hotkey.press),
             on_release=lambda key : self.update_hotkey_states(key, hotkey.release, stop_hotkey.release), 

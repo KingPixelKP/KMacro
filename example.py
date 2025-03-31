@@ -11,4 +11,6 @@ def run(): #Every script needs a function called run to be called by the manager
     #or
     type("Dingus", 10) #Or a user can just pass the number of times a command as to be repeated
 
+    type("Dingus", delay=1000)#Create artificial delay between key presses
+
     final() #Also does nothing sends a message saying the macro as ended
