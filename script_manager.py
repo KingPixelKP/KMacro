@@ -1,6 +1,5 @@
 import os
 
-import pynput._util
 os.environ['PYNPUT_BACKEND_KEYBOARD'] = 'uinput'
 
 uinput_device_paths = "/dev/input/event2"
@@ -10,7 +9,6 @@ import importlib
 from threading import Event
 
 from pynput import keyboard
-import pynput
 import sys
 
 
@@ -54,6 +52,7 @@ class Manager():
     _macros_paused : Event
     _macro_running : Event
     _pause_others : Event
+    _demo_file_name = "demo.txt"
 
     active_macros : dict = {}    
     data : dict = {}
@@ -97,18 +96,22 @@ class Manager():
 
     def load_new_macro(self, macro_name : str):
         """Loads a new macro by importing the module where the macro is stored at"""
-        script = importlib.import_module(macro_name, self.data[self._conf_macro_path])
-        s = Script(script, macro_name)
+        try :
+            script = importlib.import_module(macro_name, self.data[self._conf_macro_path])
+            s = Script(script, macro_name)
+            names : dict = self.active_macros.get(s._bind)
 
-        names : dict = self.active_macros.get(s._bind)
+            if names is None:
+                names = {}
+        
+            listener = self.create_listener_hotkey(s) #Create a new listener for this macro
+            names[s.name] = listener
+            self.active_macros[s._stop_bind] = names
+            listener.start()
+            
+        except (ModuleNotFoundError):
+            print("No macro with name {} :(".format(macro_name))
 
-        if names is None:
-            names = {}
-    
-        listener = self.create_listener_hotkey(s) #Create a new listener for this macro
-        names[s.name] = listener
-        self.active_macros[s._stop_bind] = names
-        listener.start()
 
     def unload_macro(self, bind, macro_name):
         names : dict = self.active_macros.get(bind)
@@ -173,3 +176,10 @@ class Manager():
             for k in dict.keys():
                 print("Macro name: {}".format(bind, k))
             print()
+
+    def create_new_macro(self, macro_name):
+        with open(macro_name + ".py", 'w') as file:
+            with open(self._demo_file_name, 'r') as text:
+                tt = text.read()
+                file.write(tt)
+            print("File created!")

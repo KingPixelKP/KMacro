@@ -6,6 +6,7 @@ help = "HELP"
 run = "RUN"
 script = "SCRIPT"
 active = "ACTIVE"
+create = "CREATE"
 helpMenu = """Help --> show this menu
 Exit --> exit the program
 Script/Run --> run a python macro
@@ -32,6 +33,8 @@ def main():
             manager.load_new_macro(line.split()[1])
         elif cmd == active:
             manager.list_active_macros()
+        elif cmd == create:
+            manager.create_new_macro(line.split()[1])
         elif cmd == exit:
             pass
         else:
