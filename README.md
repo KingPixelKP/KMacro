@@ -43,4 +43,4 @@ those specified by the user
 
 ## Dependencies
 
-This requires ydotool to run as it is much simpler to use it as a input simulator than the one in pynput that uses a kernel layout instead of a xkb 
+This requires ydotool to run as it is much simpler to use it as an input simulator than the one in pynput that uses a kernel layout instead of a xkb 
